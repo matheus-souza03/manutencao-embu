@@ -4,7 +4,7 @@ import { enviarFila } from "./envio.js";
 
 // Aumente a cada mudança em qualquer arquivo do app (inclusive config.js): é assim que os
 // celulares percebem a versão nova e mostram "Nova versão disponível".
-const VERSAO = "1";
+const VERSAO = "2";
 // Nome próprio deste app: o de Quissamã, no mesmo GitHub Pages, usa "manutencao-" (veja fila.js).
 const CACHE = `medicao-embu-${VERSAO}`;
 const ARQUIVOS = [
