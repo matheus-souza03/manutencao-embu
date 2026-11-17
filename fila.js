@@ -8,7 +8,7 @@
 const NOME_BANCO = "medicao-embu";
 const VERSAO_BANCO = 1;
 const ITENS = "itens";
-const CONTROLE = "controle"; // trava de envio, próxima ordem, rascunho, sugestões
+const CONTROLE = "controle"; // trava de envio, próxima ordem, rascunho, sugestões, código do celular e liberação
 
 let conexao = null;
 
@@ -128,6 +128,18 @@ export function criarFila() {
       transacao([CONTROLE], "readwrite", (l) => {
         if (valor === null || valor === undefined) l[CONTROLE].delete(chave);
         else l[CONTROLE].put(valor, chave);
+      }),
+
+    /**
+     * Devolve o valor guardado; se não houver, grava `valorNovo` e devolve ele. Ler e gravar na mesma
+     * transação: a página e o service worker podem pedir juntos e só um valor vale (o código do celular).
+     */
+    garantirControle: (chave, valorNovo) =>
+      transacao([CONTROLE], "readwrite", async (l) => {
+        const atual = await esperar(l[CONTROLE].get(chave));
+        if (atual !== null && atual !== undefined) return atual;
+        l[CONTROLE].put(valorNovo, chave);
+        return valorNovo;
       }),
   };
 }

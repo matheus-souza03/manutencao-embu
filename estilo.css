@@ -209,6 +209,28 @@ select {
   cursor: pointer;
 }
 
+/* Celular ainda não liberado: o código vai numa caixa branca, para ler no sol e copiar inteiro. */
+.aviso--liberar {
+  display: grid;
+  gap: var(--e3);
+}
+
+.codigo {
+  padding: var(--e2) var(--e3);
+  border-radius: var(--raio);
+  background: var(--branco);
+  font-family: ui-monospace, "Roboto Mono", "Droid Sans Mono", monospace;
+  font-size: var(--texto-base);
+  font-weight: 700;
+  letter-spacing: 0.02em; /* mais que isso, o código quebra em duas linhas num celular de 360 px */
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.aviso--liberar .botao {
+  justify-self: start;
+}
+
 /* ---------- Conteúdo ---------- */
 
 .conteudo {

@@ -1,6 +1,7 @@
 // Tela do app: formulário, fila e indicador de conexão.
 import { CAMPOS } from "./campos.js";
-import { enviarFila } from "./envio.js";
+import { URL_APPS_SCRIPT } from "./config.js";
+import { codigoDoAparelho, enviarFila } from "./envio.js";
 import { criarFila } from "./fila.js";
 import { reduzirFoto } from "./fotos.js";
 import {
@@ -9,6 +10,7 @@ import {
   aguardando,
   dataDeHoje,
   emOrdem,
+  estaLiberado,
   formatarQuando,
   formularioVazio,
   isoComFuso,
@@ -29,6 +31,7 @@ const LADOS = ["antes", "depois"];
 
 const fila = criarFila();
 const canal = "BroadcastChannel" in self ? new BroadcastChannel("medicao-embu") : null;
+const podeCompartilhar = "share" in navigator; // no Android, "Enviar código" abre o compartilhar (WhatsApp)
 const $ = (id) => document.getElementById(id);
 
 const estado = {
@@ -38,6 +41,8 @@ const estado = {
   preparandoFotos: 0,
   enviando: false,
   sugestoes: {},
+  codigo: "", // deste celular: o escritório cadastra na aba "Acessos" da planilha
+  acesso: undefined, // o que a planilha disse por último sobre este celular
 };
 
 // ---------- Início ----------
@@ -51,6 +56,10 @@ async function iniciar() {
   preencher(null, null);
   await restaurarRascunho();
   acompanharHoje();
+  // O código nasce na 1ª vez que o app abre (mesmo sem internet), para o aviso já poder mostrá-lo.
+  estado.codigo = await codigoDoAparelho(fila);
+  $("codigo-aparelho").textContent = estado.codigo;
+  if (!podeCompartilhar) $("enviar-codigo").textContent = "Copiar código";
   await atualizar();
   enviarAgora();
   setInterval(() => {
@@ -240,6 +249,7 @@ function ligarEventos() {
   });
   $("cancelar").addEventListener("click", sairDaCorrecao);
   $("enviar-agora").addEventListener("click", () => enviarAgora({ avisarResultado: true }));
+  $("enviar-codigo").addEventListener("click", enviarCodigo);
   $("ir-novo").addEventListener("click", () => mostrarTela("novo"));
   document.querySelectorAll(".aba").forEach((aba) => aba.addEventListener("click", () => mostrarTela(aba.dataset.tela)));
   window.addEventListener("online", () => {
@@ -270,8 +280,11 @@ function mostrarTela(tela) {
 
 async function atualizar() {
   estado.itens = await fila.listar();
+  estado.acesso = await fila.lerControle("acesso");
   desenharConexaoEFila();
   desenharFila();
+  // Até a planilha confirmar que este celular está liberado, o aviso fica em todas as telas.
+  $("aviso-liberar").hidden = estaLiberado(estado.acesso, URL_APPS_SCRIPT);
 }
 
 function desenharConexaoEFila() {
@@ -519,9 +532,11 @@ async function depoisDeSalvar(id, inicio) {
     resultado = await enviarAgora();
     item = await fila.obter(id);
     if (!item || item.situacao !== SITUACAO.PENDENTE || item.ultimo_erro) break;
+    if (resultado && resultado.situacao === "nao_liberado") break; // a 2ª vez só ouviria o mesmo da planilha
   }
   if (item && item.situacao === SITUACAO.ENVIADO) recado("Enviado.");
   else if (item && item.situacao === SITUACAO.ERRO) recado("A planilha recusou o lançamento. Veja o erro na fila.");
+  else if (resultado && resultado.situacao === "nao_liberado") recado(`${inicio} Fica guardado até o escritório liberar este celular.`);
   else if (resultado && resultado.situacao === "parado") recado(`${inicio} A fila está parada num lançamento com erro. Corrija ou apague esse para os outros seguirem.`);
   else if (!navigator.onLine) recado(`${inicio} Será enviado quando houver internet.`);
   else if (resultado && resultado.situacao === "tentar_depois") recado(`${inicio} Não foi possível enviar agora. O app tenta de novo sozinho.`);
@@ -589,6 +604,7 @@ async function enviarAgora({ avisarResultado = false } = {}) {
   const resultado = await envioAtual;
   if (avisarResultado && resultado) {
     if (resultado.situacao === "tentar_depois") recado(`Não foi possível enviar agora. ${resultado.mensagem}`);
+    else if (resultado.situacao === "nao_liberado") recado("Este celular ainda não foi liberado. Mande o código para o escritório.");
     else if (resultado.situacao === "vazio") recado("Tudo enviado.");
     else if (resultado.situacao === "ocupado") recado("Já está enviando. Espere um pouco.");
   }
@@ -613,7 +629,8 @@ async function executarEnvio() {
     estado.enviando = false;
     await atualizar();
   }
-  if (resultado && resultado.situacao === "tentar_depois") pedirEnvioEmSegundoPlano();
+  // Não liberado: o segundo plano pergunta de novo mais tarde, e a fila sai sozinha quando o escritório liberar.
+  if (resultado && (resultado.situacao === "tentar_depois" || resultado.situacao === "nao_liberado")) pedirEnvioEmSegundoPlano();
   if (resultado && resultado.situacao === "ocupado") tentarDeNovoEm(resultado.livreEm);
   return resultado;
 }
@@ -635,6 +652,28 @@ function pedirEnvioEmSegundoPlano() {
   navigator.serviceWorker.ready
     .then((registro) => registro.sync && registro.sync.register(ETIQUETA_SYNC))
     .catch(() => {});
+}
+
+// ---------- Código do celular ----------
+
+/** O técnico manda o código ao escritório, que o cadastra na planilha para liberar este celular. */
+async function enviarCodigo() {
+  if (podeCompartilhar) {
+    try {
+      await navigator.share({ text: estado.codigo }); // só o código: o escritório copia exatamente ele
+      return;
+    } catch (erro) {
+      if (erro && erro.name === "AbortError") return; // a pessoa desistiu de compartilhar
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(estado.codigo);
+    recado("Código copiado. Cole na conversa com o escritório.");
+  } catch (erro) {
+    // Sem como copiar daqui: o código fica selecionado, e a pessoa copia com o dedo.
+    window.getSelection().selectAllChildren($("codigo-aparelho"));
+    recado("Toque e segure o código para copiar.");
+  }
 }
 
 // ---------- Rascunho e sugestões ----------

@@ -2,7 +2,7 @@
 // Testadas com node --test (app_campo/tests/).
 import { CAMPOS } from "./campos.js";
 
-export const VERSAO_CONTRATO = 3; // igual a VERSAO_CONTRATO do Apps Script
+export const VERSAO_CONTRATO = 4; // igual a VERSAO_CONTRATO do Apps Script
 export const TAMANHO_MAXIMO_TEXTO = 300; // igual ao Apps Script
 export const DIAS_ENVIADOS_VISIVEIS = 7;
 export const DIAS_PENDENCIA_ANTIGA = 2;
@@ -98,9 +98,9 @@ export function limparCampos(valores, campos = CAMPOS) {
   return limpos;
 }
 
-/** Corpo do POST para o Apps Script (contrato na especificação). */
-export function montarEnvio(item, base64Antes, base64Depois, campos = CAMPOS) {
-  const corpo = { versao: VERSAO_CONTRATO, id: item.id, registrado_em: item.registrado_em };
+/** Corpo do POST para o Apps Script (contrato na especificação). `aparelho`: o código deste celular. */
+export function montarEnvio(item, base64Antes, base64Depois, aparelho, campos = CAMPOS) {
+  const corpo = { versao: VERSAO_CONTRATO, aparelho: aparelho, id: item.id, registrado_em: item.registrado_em };
   campos.forEach((campo) => {
     corpo[campo.chave] = item.campos[campo.chave] || "";
   });
@@ -134,7 +134,7 @@ export function podeMexer(item) {
   return Boolean(item) && (item.situacao === SITUACAO.PENDENTE || item.situacao === SITUACAO.ERRO);
 }
 
-/** Entende a resposta do Apps Script. tipo: "enviado" | "erro" | "tentar_depois". */
+/** Entende a resposta do Apps Script. tipo: "enviado" | "erro" | "tentar_depois" | "nao_liberado". */
 export function interpretarResposta({ erroRede, abortado, status, texto }) {
   if (abortado) return tentarDepois("A planilha demorou demais para responder.");
   if (erroRede) return tentarDepois("Sem conexão com a planilha.");
@@ -149,6 +149,11 @@ export function interpretarResposta({ erroRede, abortado, status, texto }) {
     return tentarDepois("A planilha respondeu de um jeito inesperado. Se continuar, avise o escritório.");
   }
   if (dados.ok === true) return { tipo: "enviado", linha: dados.linha, duplicado: Boolean(dados.duplicado) };
+  if (dados.liberado === false) {
+    // Falta o escritório liberar o código do celular: não é erro do lançamento, ele espera no celular.
+    const padrao = "Este celular não está liberado para enviar. Fale com o escritório.";
+    return { tipo: "nao_liberado", mensagem: typeof dados.erro === "string" && dados.erro ? dados.erro : padrao };
+  }
   const mensagem = typeof dados.erro === "string" && dados.erro ? dados.erro : "A planilha recusou o lançamento.";
   return dados.temporario === true ? tentarDepois(mensagem) : { tipo: "erro", mensagem: mensagem };
 }
@@ -189,6 +194,37 @@ export function enviadosParaLimpar(itens, agoraMs) {
 export function temPendenciaAntiga(itens, agoraMs) {
   const limite = agoraMs - DIAS_PENDENCIA_ANTIGA * DIA_MS;
   return aguardando(itens).some((item) => item.criado_ms < limite);
+}
+
+// ---------- Código do celular ----------
+// A planilha só grava o que vem de um celular liberado pelo escritório (aba "Acessos"). O app sorteia
+// o código uma vez; o técnico manda para o escritório, que cola na aba.
+
+const ALFABETO_CODIGO = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"; // sem I, L, O e U, que se confundem ao digitar
+
+/** "7KQM-2X9P-H4RT-W8ZD-B3NC": 20 letras e números sorteados, em grupos de 4. */
+export function novoCodigoAparelho(bytes = crypto.getRandomValues(new Uint8Array(20))) {
+  // Uma letra por byte; byte % 32 não favorece nenhuma letra, porque 256 = 8 × 32.
+  const letras = Array.from(bytes, (byte) => ALFABETO_CODIGO[byte % 32]).join("");
+  return letras.match(/.{4}/g).join("-");
+}
+
+/** Pergunta à planilha se este celular já foi liberado, sem mandar fotos. */
+export function montarConsultaAcesso(aparelho) {
+  return { versao: VERSAO_CONTRATO, aparelho: aparelho, consulta: "acesso" };
+}
+
+/** Resposta da pergunta. tipo: "liberado" | "nao_liberado" | "tentar_depois" (a pergunta nunca para a fila). */
+export function interpretarAcesso(entrada) {
+  const resultado = interpretarResposta(entrada);
+  if (resultado.tipo === "enviado") return { tipo: "liberado" };
+  if (resultado.tipo === "nao_liberado") return resultado;
+  return tentarDepois(resultado.mensagem);
+}
+
+/** Só está liberado se a planilha deste endereço disse que sim. Trocou a URL em config.js: pergunta de novo. */
+export function estaLiberado(acesso, url) {
+  return Boolean(acesso) && acesso.liberado === true && acesso.url === lerUrl(url);
 }
 
 // ---------- Textos e datas ----------

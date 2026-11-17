@@ -16,7 +16,7 @@
     <header class="topo">
       <div class="topo-linha">
         <img class="logo" src="icones/marca.png" alt="" width="32" height="32" />
-        <h1 class="topo-titulo">Manutenção - Embu</h1>
+        <h1 class="topo-titulo">Manutenção</h1>
         <p class="conexao" id="conexao" role="status" aria-live="polite">
           <span class="conexao-sinal" aria-hidden="true"></span>
           <span class="conexao-textos">
@@ -32,6 +32,12 @@
       <button class="aviso aviso--acao" id="aviso-atualizar" type="button" hidden>
         Nova versão disponível. Toque para atualizar.
       </button>
+      <div class="aviso aviso--atencao aviso--liberar" id="aviso-liberar" hidden>
+        <p>Este celular ainda não pode enviar para a planilha. Mande este código para o escritório liberar:</p>
+        <p class="codigo" id="codigo-aparelho"></p>
+        <button class="botao botao--secundario" id="enviar-codigo" type="button">Enviar código</button>
+        <p>Até lá, os lançamentos ficam guardados no celular.</p>
+      </div>
       <p class="aviso aviso--atencao" id="aviso-antigo" hidden>
         Há lançamentos sem enviar há mais de 2 dias. Abra o app com internet.
       </p>

@@ -4,7 +4,7 @@ import { enviarFila } from "./envio.js";
 
 // Aumente a cada mudança em qualquer arquivo do app (inclusive config.js): é assim que os
 // celulares percebem a versão nova e mostram "Nova versão disponível".
-const VERSAO = "3";
+const VERSAO = "1";
 // Nome próprio deste app: o de Quissamã, no mesmo GitHub Pages, usa "manutencao-" (veja fila.js).
 const CACHE = `medicao-embu-${VERSAO}`;
 const ARQUIVOS = [
@@ -70,9 +70,9 @@ self.addEventListener("sync", (evento) => {
       const canal = new BroadcastChannel("medicao-embu");
       try {
         const resultado = await enviarFila({ fila: criarFila(), avisar: () => canal.postMessage("mudou") });
-        // Falhou por conexão, ou outro envio segurava a fila (talvez um app fechado no meio):
-        // rejeitar faz o Chrome tentar de novo mais tarde.
-        if (resultado.situacao === "tentar_depois" || resultado.situacao === "ocupado") {
+        // Falhou por conexão, ou outro envio segurava a fila (talvez um app fechado no meio), ou o
+        // escritório ainda não liberou este celular: rejeitar faz o Chrome tentar de novo mais tarde.
+        if (resultado.situacao === "tentar_depois" || resultado.situacao === "ocupado" || resultado.situacao === "nao_liberado") {
           throw new Error(resultado.mensagem || resultado.situacao);
         }
       } finally {
