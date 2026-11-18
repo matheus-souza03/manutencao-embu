@@ -124,17 +124,18 @@ function montarCampos() {
 }
 
 function criarEntrada(campo, id) {
-  const entrada = criar("input");
+  const entrada = criar(campo.multilinha ? "textarea" : "input");
+  if (campo.multilinha) entrada.rows = 4;
   Object.assign(entrada, { id: id, name: campo.chave, autocomplete: "off" });
   if (campo.tipo === "data") {
     entrada.type = "date";
   } else {
-    entrada.type = "text";
+    if (!campo.multilinha) entrada.type = "text";
     entrada.maxLength = TAMANHO_MAXIMO_TEXTO;
     const teclado = campo.tipo === "numero" ? (campo.decimais ? "decimal" : "numeric") : campo.teclado || "text";
     entrada.setAttribute("inputmode", teclado);
     entrada.setAttribute("autocapitalize", campo.maiusculas || "sentences");
-    entrada.setAttribute("enterkeyhint", "next");
+    if (!campo.multilinha) entrada.setAttribute("enterkeyhint", "next"); // Enter na caixa de texto quebra a linha
     if (campo.tipo === "numero") {
       // Só números: o que não for algarismo (ou a vírgula dos metros) some enquanto digita ou cola.
       entrada.addEventListener("input", () => {
@@ -236,6 +237,13 @@ function ligarEventos() {
     if (evento.target.name) limparErro(evento.target.name);
     atualizarMateriais();
     salvarRascunhoDepois();
+  });
+  // "Próximo" do teclado (Enter num campo de uma linha): vai para o campo seguinte. Sem isso, o
+  // navegador envia o formulário e salva o lançamento. Só o botão Salvar salva.
+  $("formulario").addEventListener("keydown", (evento) => {
+    if (evento.key !== "Enter" || evento.target.tagName !== "INPUT") return; // na caixa de texto, Enter quebra a linha
+    evento.preventDefault();
+    irParaProximoCampo(evento.target);
   });
   LADOS.forEach((lado) => {
     // entrada-: abre a câmera (o quadro); galeria-: escolhe uma foto já tirada.
@@ -413,6 +421,16 @@ function mostrarFoto(lado, blob) {
 }
 
 // ---------- Formulário ----------
+
+/** Foca o campo seguinte do formulário, pulando os bloqueados (quantidade em "Não usou"). No último, fecha o teclado. */
+function irParaProximoCampo(atual) {
+  const campos = [...$("formulario").querySelectorAll("input, select, textarea")].filter(
+    (elemento) => elemento.type !== "file" && !elemento.disabled && elemento.offsetParent !== null
+  );
+  const proximo = campos[campos.indexOf(atual) + 1];
+  if (proximo) proximo.focus();
+  else atual.blur();
+}
 
 function lerValores() {
   const valores = {};

@@ -10,7 +10,8 @@
 //   opcoes: escolhas prontas; aparecem como botões, ou como lista com lista: true. Na lista, uma opção
 //     também pode ser { valor, texto }: o valor vai para a planilha e o texto (mais curto) aparece na tela
 //   junto: fica colado ao campo de cima (a quantidade do material)
-//   material: chave do material desta quantidade: com o material em "Não usou", ela fica bloqueada e vazia
+//   material: chave do material desta quantidade: com o material em "Não usou", ela fica bloqueada e vazia;
+//     com um tipo escolhido, ela é obrigatória e maior que zero
 //   secao + explicacao: título que aparece antes do campo
 //   teclado, maiusculas: teclado do celular | sugestoes: lembra o que já foi digitado | dica: ajuda
 
@@ -53,10 +54,11 @@ export const CAMPOS = [
   { chave: "cabo", rotulo: "Cabo", nome: "o cabo", opcoes: CABOS, lista: true },
   { chave: "cabo_metros", rotulo: "Metros", nome: "os metros de cabo", tipo: "numero", decimais: true, junto: true, material: "cabo" },
   // Material de um tipo só: só a quantidade.
-  { chave: "conector_perfurante_qtd", rotulo: "Conector Perfurante (quantidade)", nome: "a quantidade de conectors perfurantes", tipo: "numero" },
+  { chave: "conector_perfurante_qtd", rotulo: "Conector perfurante (quantidade)", nome: "a quantidade de conectors perfurantes", tipo: "numero" },
   { chave: "chave_magnetica_qtd", rotulo: "Chave magnética de comando em grupo 2 x 100A (quantidade)", nome: "a quantidade de chaves magnéticas", tipo: "numero" },
   { chave: "base_rele_qtd", rotulo: "Base para relé fotocélula (quantidade)", nome: "a quantidade de bases para relé fotocélula", tipo: "numero" },
   { chave: "rele_qtd", rotulo: "Relé fotoelétrico com capacidade de 1000W (quantidade)", nome: "a quantidade de relés fotoelétricos", tipo: "numero" },
+  { chave: "fita_isolante_qtd", rotulo: "Fita isolante (quantidade)", nome: "a quantidade de fitas isolantes", tipo: "numero" },
   { chave: "armacao_qtd", rotulo: "Armação secundária pesada com um estribo e isolador roldana (quantidade)", nome: "a quantidade de armações secundárias", tipo: "numero" },
 
   // Texto livre, opcional, no fim do formulário (caixa de várias linhas).
