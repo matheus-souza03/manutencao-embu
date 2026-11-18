@@ -2,9 +2,15 @@
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
     <meta name="theme-color" content="#ffc844" />
-    <meta name="description" content="Lançamento dos serviços de manutenção, com fotos de antes e depois." />
+    <meta
+      name="description"
+      content="Lançamento dos serviços de manutenção, com fotos de antes e depois."
+    />
     <title>Manutenção</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icones/icone-192.png" />
@@ -15,8 +21,14 @@
   <body>
     <header class="topo">
       <div class="topo-linha">
-        <img class="logo" src="icones/marca.png" alt="" width="32" height="32" />
-        <h1 class="topo-titulo">Manutenção</h1>
+        <img
+          class="logo"
+          src="icones/marca.png"
+          alt=""
+          width="32"
+          height="32"
+        />
+        <h1 class="topo-titulo">Manutenção Embu</h1>
         <p class="conexao" id="conexao" role="status" aria-live="polite">
           <span class="conexao-sinal" aria-hidden="true"></span>
           <span class="conexao-textos">
@@ -29,13 +41,31 @@
     </header>
 
     <div class="avisos" id="avisos">
-      <button class="aviso aviso--acao" id="aviso-atualizar" type="button" hidden>
+      <button
+        class="aviso aviso--acao"
+        id="aviso-atualizar"
+        type="button"
+        hidden
+      >
         Nova versão disponível. Toque para atualizar.
       </button>
-      <div class="aviso aviso--atencao aviso--liberar" id="aviso-liberar" hidden>
-        <p>Este celular ainda não consegue enviar os lançamentos. Indique este código para o administrador:</p>
+      <div
+        class="aviso aviso--atencao aviso--liberar"
+        id="aviso-liberar"
+        hidden
+      >
+        <p>
+          Este celular ainda não consegue enviar os lançamentos. Indique este
+          código para o administrador:
+        </p>
         <p class="codigo" id="codigo-aparelho"></p>
-        <button class="botao botao--secundario" id="enviar-codigo" type="button">Enviar código</button>
+        <button
+          class="botao botao--secundario"
+          id="enviar-codigo"
+          type="button"
+        >
+          Enviar código
+        </button>
         <p>Até lá, os lançamentos ficam apenas no celular.</p>
       </div>
       <p class="aviso aviso--atencao" id="aviso-antigo" hidden>
@@ -58,9 +88,36 @@
             <div class="fotos-grade">
               <div class="foto-bloco">
                 <label class="foto" id="foto-antes" for="entrada-antes">
-                  <input class="escondido" id="entrada-antes" type="file" accept="image/*" capture="environment" aria-describedby="erro-foto_antes" />
+                  <input
+                    class="escondido"
+                    id="entrada-antes"
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    aria-describedby="erro-foto_antes"
+                  />
                   <span class="foto-vazia">
-                    <svg class="foto-icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l1.5 2H20a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3.5L9 4Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="12.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+                    <svg
+                      class="foto-icone"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M9 4h6l1.5 2H20a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3.5L9 4Z"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                        stroke-linejoin="round"
+                      />
+                      <circle
+                        cx="12"
+                        cy="12.5"
+                        r="3.6"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                      />
+                    </svg>
                     <span class="foto-nome">Antes</span>
                     <span class="foto-ajuda">Tirar foto</span>
                   </span>
@@ -69,16 +126,49 @@
                 </label>
                 <!-- O seletor do Android 14+ não oferece a câmera: o quadro abre a câmera e este botão, a galeria. -->
                 <label class="galeria" for="galeria-antes">
-                  <input class="escondido" id="galeria-antes" type="file" accept="image/*" aria-describedby="erro-foto_antes" />
+                  <input
+                    class="escondido"
+                    id="galeria-antes"
+                    type="file"
+                    accept="image/*"
+                    aria-describedby="erro-foto_antes"
+                  />
                   Escolher da galeria
                 </label>
                 <p class="erro" id="erro-foto_antes"></p>
               </div>
               <div class="foto-bloco">
                 <label class="foto" id="foto-depois" for="entrada-depois">
-                  <input class="escondido" id="entrada-depois" type="file" accept="image/*" capture="environment" aria-describedby="erro-foto_depois" />
+                  <input
+                    class="escondido"
+                    id="entrada-depois"
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    aria-describedby="erro-foto_depois"
+                  />
                   <span class="foto-vazia">
-                    <svg class="foto-icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l1.5 2H20a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3.5L9 4Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="12.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+                    <svg
+                      class="foto-icone"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M9 4h6l1.5 2H20a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3.5L9 4Z"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                        stroke-linejoin="round"
+                      />
+                      <circle
+                        cx="12"
+                        cy="12.5"
+                        r="3.6"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                      />
+                    </svg>
                     <span class="foto-nome">Depois</span>
                     <span class="foto-ajuda">Tirar foto</span>
                   </span>
@@ -87,7 +177,13 @@
                 </label>
                 <!-- O seletor do Android 14+ não oferece a câmera: o quadro abre a câmera e este botão, a galeria. -->
                 <label class="galeria" for="galeria-depois">
-                  <input class="escondido" id="galeria-depois" type="file" accept="image/*" aria-describedby="erro-foto_depois" />
+                  <input
+                    class="escondido"
+                    id="galeria-depois"
+                    type="file"
+                    accept="image/*"
+                    aria-describedby="erro-foto_depois"
+                  />
                   Escolher da galeria
                 </label>
                 <p class="erro" id="erro-foto_depois"></p>
@@ -99,8 +195,17 @@
           <div id="campos"></div>
 
           <div class="acoes-form">
-            <button class="botao botao--principal" id="salvar" type="submit">Salvar</button>
-            <button class="botao botao--secundario" id="cancelar" type="button" hidden>Cancelar correção</button>
+            <button class="botao botao--principal" id="salvar" type="submit">
+              Salvar
+            </button>
+            <button
+              class="botao botao--secundario"
+              id="cancelar"
+              type="button"
+              hidden
+            >
+              Cancelar correção
+            </button>
           </div>
         </form>
       </section>
@@ -109,37 +214,70 @@
       <section id="tela-fila" aria-labelledby="titulo-fila" hidden>
         <h2 class="titulo cabeca-fila" id="titulo-fila">Aguardando envio</h2>
         <p class="aviso aviso--erro" id="aviso-parado" hidden>
-          A fila parou no lançamento com erro. Os seguintes esperam até você corrigir ou apagar esse.
-          Eles são enviados um de cada vez, na ordem em que foram feitos.
+          A fila parou no lançamento com erro. Os seguintes esperam até você
+          corrigir ou apagar esse. Eles são enviados um de cada vez, na ordem em
+          que foram feitos.
         </p>
         <p class="explicacao" id="explicacao-offline" hidden>
-          Sem internet agora. Eles serão enviados sozinhos quando a internet voltar.
+          Sem internet agora. Eles serão enviados sozinhos quando a internet
+          voltar.
         </p>
-        <button class="botao botao--principal botao--largo" id="enviar-agora" type="button" hidden>Enviar agora</button>
+        <button
+          class="botao botao--principal botao--largo"
+          id="enviar-agora"
+          type="button"
+          hidden
+        >
+          Enviar agora
+        </button>
         <ul class="lista" id="lista-aguardando"></ul>
         <div class="vazio" id="fila-vazia" hidden>
           <p>Tudo o que você lançou chegou à planilha.</p>
-          <button class="botao botao--secundario" id="ir-novo" type="button">Novo lançamento</button>
+          <button class="botao botao--secundario" id="ir-novo" type="button">
+            Novo lançamento
+          </button>
         </div>
 
-        <h2 class="titulo titulo--secao" id="titulo-enviados" hidden>Enviados nos últimos 7 dias</h2>
+        <h2 class="titulo titulo--secao" id="titulo-enviados" hidden>
+          Enviados nos últimos 7 dias
+        </h2>
         <ul class="lista lista--enviados" id="lista-enviados"></ul>
       </section>
     </main>
 
     <nav class="abas" aria-label="Telas">
-      <button class="aba" id="aba-novo" type="button" data-tela="novo" aria-current="page">Novo lançamento</button>
-      <button class="aba" id="aba-fila" type="button" data-tela="fila">Fila <span class="aba-contagem" id="aba-contagem"></span></button>
+      <button
+        class="aba"
+        id="aba-novo"
+        type="button"
+        data-tela="novo"
+        aria-current="page"
+      >
+        Novo lançamento
+      </button>
+      <button class="aba" id="aba-fila" type="button" data-tela="fila">
+        Fila <span class="aba-contagem" id="aba-contagem"></span>
+      </button>
     </nav>
 
-    <div class="recado" id="recado" role="status" aria-live="polite" hidden></div>
+    <div
+      class="recado"
+      id="recado"
+      role="status"
+      aria-live="polite"
+      hidden
+    ></div>
 
     <dialog class="dialogo" id="dialogo" aria-labelledby="dialogo-titulo">
       <form method="dialog">
         <h2 class="titulo" id="dialogo-titulo"></h2>
         <p id="dialogo-texto"></p>
         <div class="dialogo-acoes">
-          <button class="botao botao--perigo" value="sim" id="dialogo-sim"></button>
+          <button
+            class="botao botao--perigo"
+            value="sim"
+            id="dialogo-sim"
+          ></button>
           <button class="botao botao--secundario" value="nao">Cancelar</button>
         </div>
       </form>
