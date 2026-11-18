@@ -5,6 +5,7 @@
 //   obrigatorio: true = não pode ficar vazio (sem isso, pode) | seVazio: valor gravado se ficar vazio
 //   tipo: "texto" (padrão), "numero" ou "data", igual ao Apps Script. Número digitado aceita só
 //     algarismos; com decimais: true, também uma vírgula (1,5)
+//   multilinha: true = caixa de texto de várias linhas, em vez de uma linha só
 //   topo: aparece no alto do formulário, antes das fotos
 //   opcoes: escolhas prontas; aparecem como botões, ou como lista com lista: true. Na lista, uma opção
 //     também pode ser { valor, texto }: o valor vai para a planilha e o texto (mais curto) aparece na tela
@@ -52,8 +53,12 @@ export const CAMPOS = [
   { chave: "cabo", rotulo: "Cabo", nome: "o cabo", opcoes: CABOS, lista: true },
   { chave: "cabo_metros", rotulo: "Metros", nome: "os metros de cabo", tipo: "numero", decimais: true, junto: true, material: "cabo" },
   // Material de um tipo só: só a quantidade.
+  { chave: "conector_perfurante_qtd", rotulo: "Conector Perfurante (quantidade)", nome: "a quantidade de conectors perfurantes", tipo: "numero" },
   { chave: "chave_magnetica_qtd", rotulo: "Chave magnética de comando em grupo 2 x 100A (quantidade)", nome: "a quantidade de chaves magnéticas", tipo: "numero" },
   { chave: "base_rele_qtd", rotulo: "Base para relé fotocélula (quantidade)", nome: "a quantidade de bases para relé fotocélula", tipo: "numero" },
   { chave: "rele_qtd", rotulo: "Relé fotoelétrico com capacidade de 1000W (quantidade)", nome: "a quantidade de relés fotoelétricos", tipo: "numero" },
   { chave: "armacao_qtd", rotulo: "Armação secundária pesada com um estribo e isolador roldana (quantidade)", nome: "a quantidade de armações secundárias", tipo: "numero" },
+
+  // Texto livre, opcional, no fim do formulário (caixa de várias linhas).
+  { secao: "Observações", chave: "observacoes", rotulo: "Escreva se precisar", nome: "as observações", multilinha: true },
 ];
