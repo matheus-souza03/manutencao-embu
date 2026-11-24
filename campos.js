@@ -25,11 +25,10 @@ const LAMPADAS = [
   { valor: "Lâmpada vapor de sódio 150W", texto: "Vapor de sódio 150W" },
   { valor: "Lâmpada vapor de sódio 250W", texto: "Vapor de sódio 250W" },
   { valor: "Lâmpada vapor metálico 250W/220V", texto: "Vapor metálico 250W/220V" },
-  { valor: "Lâmpada LED 58W", texto: "LED 58W" }
 ];
 const REATORES = [
   { valor: "Reator para lâmpada vapor metálico 250W", texto: "Vapor metálico 250W" },
-  { valor: "Reator para lâmpada vapor de sódio 75W/220V", texto: "Vapor de sódio 75W/220V" },
+  { valor: "Reator para lâmpada vapor de sódio 70W/220V", texto: "Vapor de sódio 70W/220V" }, // era "75W" até 23/11/2026 (corrigido)
   { valor: "Reator para lâmpada vapor de sódio 150W/220V", texto: "Vapor de sódio 150W/220V" },
   { valor: "Reator para lâmpada vapor de sódio 250W/220V", texto: "Vapor de sódio 250W/220V" },
 ];
