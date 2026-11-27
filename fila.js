@@ -1,7 +1,11 @@
 // Fila de saída no celular (IndexedDB). Usada pela página e pelo service worker.
 //
-// Item: { id, ordem, registrado_em (ISO com fuso), criado_ms, campos: {...}, foto_antes: Blob,
-//         foto_depois: Blob, situacao, tentativas, ultimo_erro, ultima_tentativa_ms, enviado_ms, linha }
+// Item: { id, ordem, registrado_em (ISO com fuso), criado_ms, campos: {...}, fotos_antes: [Blob],
+//         fotos_depois: [Blob], situacao, tentativas, ultimo_erro, ultima_tentativa_ms, enviado_ms, linha }
+// Fotos: de 1 a 3 de cada lado, na ordem em que foram tiradas (a 1ª é a principal). O item guardado
+// pela versão anterior do app tem uma foto de cada lado (foto_antes: Blob, foto_depois: Blob): quem lê
+// a fila recebe as fotos já em listas (fotosEmListas), e a próxima gravação do item fica no formato novo.
+import { fotosEmListas } from "./regras.js";
 
 // Nome próprio deste app (o de Quissamã usa "manutencao"): apps no mesmo GitHub Pages dividem o
 // endereço base e, com o mesmo nome, dividiriam a fila. Vale o mesmo para o cache e o canal (sw.js, app.js).
@@ -70,9 +74,9 @@ async function transacao(nomes, modo, trabalho) {
 /** Mesma interface da fila falsa usada nos testes (tests/fila_falsa.js). */
 export function criarFila() {
   return {
-    listar: () => transacao([ITENS], "readonly", (l) => esperar(l[ITENS].getAll())),
+    listar: () => transacao([ITENS], "readonly", async (l) => (await esperar(l[ITENS].getAll())).map(fotosEmListas)),
 
-    obter: (id) => transacao([ITENS], "readonly", (l) => esperar(l[ITENS].get(id))),
+    obter: (id) => transacao([ITENS], "readonly", async (l) => fotosEmListas(await esperar(l[ITENS].get(id)))),
 
     /** Acrescenta no fim da fila (a ordem vem de um contador, não do relógio). */
     adicionar: (item) =>
@@ -87,7 +91,7 @@ export function criarFila() {
     /** Aplica `mudancas` só se `condicao(item)` for verdadeira. Devolve {ok, item}. */
     atualizarSe: (id, condicao, mudancas) =>
       transacao([ITENS], "readwrite", async (l) => {
-        const item = await esperar(l[ITENS].get(id));
+        const item = fotosEmListas(await esperar(l[ITENS].get(id)));
         if (!item || !condicao(item)) return { ok: false, item: item || null };
         const novo = Object.assign({}, item, typeof mudancas === "function" ? mudancas(item) : mudancas);
         l[ITENS].put(novo);
@@ -96,7 +100,7 @@ export function criarFila() {
 
     apagarSe: (id, condicao) =>
       transacao([ITENS], "readwrite", async (l) => {
-        const item = await esperar(l[ITENS].get(id));
+        const item = fotosEmListas(await esperar(l[ITENS].get(id)));
         if (!item || !condicao(item)) return false;
         l[ITENS].delete(id);
         return true;

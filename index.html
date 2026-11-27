@@ -85,8 +85,18 @@
           <div class="campos-topo" id="campos-topo"></div>
           <fieldset class="fotos">
             <legend class="escondido">Fotos</legend>
+            <p class="explicacao" id="dica-fotos">
+              Até 3 fotos de cada lado. A 1ª é a principal.
+            </p>
             <div class="fotos-grade">
-              <div class="foto-bloco">
+              <div class="foto-bloco" id="bloco-antes">
+                <!-- As fotos já tiradas, na ordem (app.js): a 1ª, maior, é a principal. -->
+                <ul
+                  class="miniaturas"
+                  id="miniaturas-antes"
+                  aria-label="Fotos do antes"
+                  hidden
+                ></ul>
                 <label class="foto" id="foto-antes" for="entrada-antes">
                   <input
                     class="escondido"
@@ -94,7 +104,7 @@
                     type="file"
                     accept="image/*"
                     capture="environment"
-                    aria-describedby="erro-foto_antes"
+                    aria-describedby="dica-fotos erro-foto_antes"
                   />
                   <span class="foto-vazia">
                     <svg
@@ -121,8 +131,6 @@
                     <span class="foto-nome">Antes</span>
                     <span class="foto-ajuda">Tirar foto</span>
                   </span>
-                  <img class="foto-imagem" alt="Foto do antes" hidden />
-                  <span class="foto-faixa" hidden>Antes · tirar outra</span>
                 </label>
                 <!-- O seletor do Android 14+ não oferece a câmera: o quadro abre a câmera e este botão, a galeria. -->
                 <label class="galeria" for="galeria-antes">
@@ -131,13 +139,22 @@
                     id="galeria-antes"
                     type="file"
                     accept="image/*"
-                    aria-describedby="erro-foto_antes"
+                    aria-describedby="dica-fotos erro-foto_antes"
                   />
                   Escolher da galeria
                 </label>
+                <p class="foto-maximo" id="maximo-antes" hidden>
+                  Máximo de 3 fotos
+                </p>
                 <p class="erro" id="erro-foto_antes"></p>
               </div>
-              <div class="foto-bloco">
+              <div class="foto-bloco" id="bloco-depois">
+                <ul
+                  class="miniaturas"
+                  id="miniaturas-depois"
+                  aria-label="Fotos do depois"
+                  hidden
+                ></ul>
                 <label class="foto" id="foto-depois" for="entrada-depois">
                   <input
                     class="escondido"
@@ -145,7 +162,7 @@
                     type="file"
                     accept="image/*"
                     capture="environment"
-                    aria-describedby="erro-foto_depois"
+                    aria-describedby="dica-fotos erro-foto_depois"
                   />
                   <span class="foto-vazia">
                     <svg
@@ -172,8 +189,6 @@
                     <span class="foto-nome">Depois</span>
                     <span class="foto-ajuda">Tirar foto</span>
                   </span>
-                  <img class="foto-imagem" alt="Foto do depois" hidden />
-                  <span class="foto-faixa" hidden>Depois · tirar outra</span>
                 </label>
                 <!-- O seletor do Android 14+ não oferece a câmera: o quadro abre a câmera e este botão, a galeria. -->
                 <label class="galeria" for="galeria-depois">
@@ -182,10 +197,13 @@
                     id="galeria-depois"
                     type="file"
                     accept="image/*"
-                    aria-describedby="erro-foto_depois"
+                    aria-describedby="dica-fotos erro-foto_depois"
                   />
                   Escolher da galeria
                 </label>
+                <p class="foto-maximo" id="maximo-depois" hidden>
+                  Máximo de 3 fotos
+                </p>
                 <p class="erro" id="erro-foto_depois"></p>
               </div>
             </div>

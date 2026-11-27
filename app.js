@@ -5,6 +5,8 @@ import { codigoDoAparelho, enviarFila } from "./envio.js";
 import { criarFila } from "./fila.js";
 import { reduzirFoto } from "./fotos.js";
 import {
+  LADOS,
+  MAXIMO_FOTOS_POR_LADO,
   SITUACAO,
   TAMANHO_MAXIMO_TEXTO,
   aguardando,
@@ -15,6 +17,7 @@ import {
   formularioVazio,
   isoComFuso,
   limparCampos,
+  listaDeFotos,
   podeMexer,
   semMaterial,
   proximoParaEnviar,
@@ -27,7 +30,6 @@ import {
 const ETIQUETA_SYNC = "enviar-fila";
 const INTERVALO_ENVIO_MS = 30 * 1000;
 const MAXIMO_SUGESTOES = 200;
-const LADOS = ["antes", "depois"];
 
 const fila = criarFila();
 const canal = "BroadcastChannel" in self ? new BroadcastChannel("medicao-embu") : null;
@@ -37,7 +39,7 @@ const $ = (id) => document.getElementById(id);
 const estado = {
   itens: [],
   editando: null, // id do item sendo corrigido
-  fotos: { antes: null, depois: null },
+  fotos: { antes: [], depois: [] }, // de 1 a 3 de cada lado, na ordem em que foram tiradas; a 1ª é a principal
   preparandoFotos: 0,
   enviando: false,
   sugestoes: {},
@@ -383,41 +385,94 @@ function textoSituacao(item, agora) {
 
 // ---------- Fotos ----------
 
+const ICONE_REMOVER =
+  '<svg viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="13" stroke-width="2"/><path d="m9.5 9.5 9 9m0-9-9 9" fill="none" stroke-width="2.4" stroke-linecap="round"/></svg>';
+const enderecos = new Map(); // cada foto na tela (Blob) e o endereço blob: da miniatura dela
+
 async function escolherFoto(lado, arquivo) {
+  if (estado.fotos[lado].length >= MAXIMO_FOTOS_POR_LADO) return; // a tela já esconde o tirar foto e a galeria
   const quadro = $(`foto-${lado}`);
   const ajuda = quadro.querySelector(".foto-ajuda");
+  // Uma foto de cada vez em cada lado: enquanto esta é preparada, não dá para escolher outra e passar de 3.
+  const entradas = [$(`entrada-${lado}`), $(`galeria-${lado}`)];
   estado.preparandoFotos += 1;
+  entradas.forEach((entrada) => (entrada.disabled = true));
   quadro.setAttribute("aria-busy", "true");
   ajuda.textContent = "Preparando foto…";
   limparErro(`foto_${lado}`);
   try {
-    estado.fotos[lado] = await reduzirFoto(arquivo);
-    mostrarFoto(lado, estado.fotos[lado]);
+    const foto = await reduzirFoto(arquivo);
+    estado.fotos[lado] = estado.fotos[lado].concat([foto]); // entra no fim: a 1ª continua a principal
+    mostrarFotos(lado);
     salvarRascunho();
   } catch (erro) {
     mostrarErro(`foto_${lado}`, "Não foi possível abrir essa foto. Tire de novo ou escolha outra.");
   } finally {
     estado.preparandoFotos -= 1;
+    entradas.forEach((entrada) => (entrada.disabled = false));
     quadro.removeAttribute("aria-busy");
     ajuda.textContent = "Tirar foto";
   }
 }
 
-function mostrarFoto(lado, blob) {
+/** Miniaturas de um lado, na ordem. Com 3 fotos, tirar foto e galeria dão lugar a "Máximo de 3 fotos". */
+function mostrarFotos(lado) {
+  const fotos = estado.fotos[lado];
+  const lista = $(`miniaturas-${lado}`);
+  lista.replaceChildren(...fotos.map((foto, indice) => miniatura(lado, foto, indice)));
+  lista.hidden = fotos.length === 0;
   const quadro = $(`foto-${lado}`);
-  const imagem = quadro.querySelector(".foto-imagem");
-  if (imagem.dataset.endereco) URL.revokeObjectURL(imagem.dataset.endereco);
-  if (blob) {
-    imagem.dataset.endereco = URL.createObjectURL(blob);
-    imagem.src = imagem.dataset.endereco;
-  } else {
-    delete imagem.dataset.endereco;
-    imagem.removeAttribute("src");
+  const cheio = fotos.length >= MAXIMO_FOTOS_POR_LADO;
+  // Com foto, o quadro vira um botão baixo embaixo das miniaturas; o nome do lado fica para o leitor de tela.
+  $(`bloco-${lado}`).classList.toggle("foto-bloco--com-fotos", fotos.length > 0);
+  quadro.querySelector(".foto-nome").classList.toggle("escondido", fotos.length > 0);
+  quadro.hidden = cheio;
+  $(`galeria-${lado}`).closest(".galeria").hidden = cheio;
+  $(`maximo-${lado}`).hidden = !cheio;
+  // Solta o endereço das fotos que saíram da tela (removidas, ou o formulário foi trocado).
+  const naTela = LADOS.flatMap((cada) => estado.fotos[cada]);
+  enderecos.forEach((endereco, foto) => {
+    if (naTela.includes(foto)) return;
+    URL.revokeObjectURL(endereco);
+    enderecos.delete(foto);
+  });
+}
+
+function miniatura(lado, foto, indice) {
+  const item = criar("li", "miniatura");
+  if (!enderecos.has(foto)) enderecos.set(foto, URL.createObjectURL(foto));
+  const imagem = criar("img", "foto-imagem");
+  imagem.src = enderecos.get(foto);
+  imagem.alt = `${indice + 1}ª foto do ${lado}${indice === 0 ? ", a principal" : ""}`;
+  item.append(imagem);
+  if (indice === 0) {
+    const faixa = criar("span", "foto-faixa", `${lado === "antes" ? "Antes" : "Depois"} · principal`);
+    faixa.setAttribute("aria-hidden", "true"); // o texto da imagem já diz
+    item.append(faixa);
   }
-  imagem.hidden = !blob;
-  quadro.querySelector(".foto-faixa").hidden = !blob;
-  quadro.querySelector(".foto-vazia").hidden = Boolean(blob);
-  quadro.classList.toggle("foto--com-imagem", Boolean(blob));
+  const remover = criar("button", "foto-remover");
+  remover.type = "button";
+  remover.setAttribute("aria-label", `Remover a ${indice + 1}ª foto do ${lado}`);
+  remover.innerHTML = ICONE_REMOVER;
+  remover.addEventListener("click", () => removerFoto(lado, foto));
+  item.append(remover);
+  return item;
+}
+
+/** Tira uma foto do lançamento. Pergunta antes: a foto do antes não dá para tirar de novo depois do serviço. */
+async function removerFoto(lado, foto) {
+  const numero = estado.fotos[lado].indexOf(foto) + 1;
+  if (numero === 0) return;
+  const confirmado = await confirmar({
+    titulo: "Remover esta foto?",
+    texto: `A ${numero}ª foto do ${lado} sai deste lançamento. Não dá para desfazer.`,
+    botao: "Remover",
+  });
+  if (!confirmado) return;
+  estado.fotos[lado] = estado.fotos[lado].filter((cada) => cada !== foto);
+  mostrarFotos(lado);
+  limparErro(`foto_${lado}`);
+  salvarRascunho();
 }
 
 // ---------- Formulário ----------
@@ -445,8 +500,8 @@ function preencher(valores, fotos) {
     controles[campo.chave].escrever((valores && valores[campo.chave]) || valorInicial(campo));
   });
   LADOS.forEach((lado) => {
-    estado.fotos[lado] = (fotos && fotos[lado]) || null;
-    mostrarFoto(lado, estado.fotos[lado]);
+    estado.fotos[lado] = fotos ? fotos[lado].slice() : [];
+    mostrarFotos(lado);
   });
   limparErros();
   atualizarMateriais();
@@ -492,7 +547,7 @@ async function salvar(evento) {
   }
 
   const campos = limparCampos(valores);
-  const fotos = { foto_antes: estado.fotos.antes, foto_depois: estado.fotos.depois };
+  const fotos = { fotos_antes: estado.fotos.antes, fotos_depois: estado.fotos.depois };
   const botao = $("salvar");
   botao.disabled = true;
   try {
@@ -571,7 +626,7 @@ async function entrarNaCorrecao(id) {
   }
   await salvarRascunho(); // o que estava sendo lançado volta depois
   estado.editando = id;
-  preencher(item.campos, { antes: item.foto_antes, depois: item.foto_depois });
+  preencher(item.campos, { antes: item.fotos_antes, depois: item.fotos_depois });
   $("titulo-novo").textContent = "Corrigir lançamento";
   $("titulo-novo").classList.remove("escondido");
   const detalhe = $("detalhe-form");
@@ -714,7 +769,8 @@ async function salvarRascunho() {
 
 async function restaurarRascunho() {
   const rascunho = await fila.lerControle("rascunho");
-  if (rascunho) preencher(rascunho.campos, { antes: rascunho.antes, depois: rascunho.depois });
+  // O rascunho da versão anterior do app tem uma foto (Blob) de cada lado, em vez da lista.
+  if (rascunho) preencher(rascunho.campos, { antes: listaDeFotos(rascunho.antes), depois: listaDeFotos(rascunho.depois) });
 }
 
 async function guardarSugestoes(campos) {

@@ -126,7 +126,7 @@ async function postar(configurado, item, aparelho, buscar) {
   if (!url) return semUrl();
   let corpo;
   try {
-    const [antes, depois] = await Promise.all([paraBase64(item.foto_antes), paraBase64(item.foto_depois)]);
+    const [antes, depois] = await Promise.all([fotosEmBase64(item.fotos_antes), fotosEmBase64(item.fotos_depois)]);
     corpo = JSON.stringify(montarEnvio(item, antes, depois, aparelho));
   } catch (erro) {
     return { tipo: "erro", mensagem: "As fotos deste lançamento se perderam no celular. Corrija escolhendo as fotos de novo." };
@@ -168,6 +168,12 @@ async function postarCorpo(url, corpo, buscar) {
   } finally {
     clearTimeout(relogio);
   }
+}
+
+/** As fotos de um lado em base64, na ordem. Lado sem foto, ou uma foto que não está mais no celular, é erro. */
+async function fotosEmBase64(fotos) {
+  if (!Array.isArray(fotos) || fotos.length === 0) throw new Error("lado sem foto");
+  return Promise.all(fotos.map(paraBase64));
 }
 
 async function paraBase64(blob) {

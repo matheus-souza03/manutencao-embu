@@ -2,8 +2,10 @@
 // Testadas com node --test (app_campo/tests/).
 import { CAMPOS } from "./campos.js";
 
-export const VERSAO_CONTRATO = 4; // igual a VERSAO_CONTRATO do Apps Script
+export const VERSAO_CONTRATO = 5; // igual a VERSAO_CONTRATO do Apps Script
 export const TAMANHO_MAXIMO_TEXTO = 300; // igual ao Apps Script
+export const MAXIMO_FOTOS_POR_LADO = 3; // igual ao Apps Script
+export const LADOS = ["antes", "depois"];
 export const DIAS_ENVIADOS_VISIVEIS = 7;
 export const DIAS_PENDENCIA_ANTIGA = 2;
 const DIA_MS = 24 * 60 * 60 * 1000;
@@ -30,7 +32,10 @@ export function semMaterial(campo, valores) {
   return Boolean(campo.material) && !limparTexto(valores[campo.material]);
 }
 
-/** Erros por campo ({chave: mensagem}), na ordem da tela; vazio quando está tudo certo. */
+/**
+ * Erros por campo ({chave: mensagem}), na ordem da tela; vazio quando está tudo certo.
+ * fotos: {antes: [Blob], depois: [Blob]}, de 1 a 3 de cada lado.
+ */
 export function validarFormulario(valores, fotos, campos = CAMPOS, hoje = dataDeHoje()) {
   const erros = {};
   const conferir = (campo) => {
@@ -39,10 +44,36 @@ export function validarFormulario(valores, fotos, campos = CAMPOS, hoje = dataDe
     if (erro) erros[campo.chave] = erro;
   };
   campos.filter((campo) => campo.topo).forEach(conferir); // acima das fotos na tela
-  if (!fotos.antes) erros.foto_antes = "Falta a foto do antes.";
-  if (!fotos.depois) erros.foto_depois = "Falta a foto do depois.";
+  LADOS.forEach((lado) => {
+    if (fotos[lado].length === 0) erros[`foto_${lado}`] = `Falta a foto do ${lado}.`;
+    else if (fotos[lado].length > MAXIMO_FOTOS_POR_LADO) erros[`foto_${lado}`] = `Use no máximo ${MAXIMO_FOTOS_POR_LADO} fotos do ${lado}.`;
+  });
   campos.filter((campo) => !campo.topo).forEach(conferir);
   return erros;
+}
+
+/**
+ * As fotos de um lado como lista, na ordem em que foram tiradas (a 1ª é a principal). O rascunho e o
+ * item da fila guardados pela versão anterior do app têm uma foto só (um Blob) de cada lado: vira [Blob].
+ */
+export function listaDeFotos(fotos) {
+  if (Array.isArray(fotos)) return fotos.slice();
+  return fotos ? [fotos] : [];
+}
+
+/**
+ * Item da fila com as fotos em listas (fotos_antes, fotos_depois). O item guardado pela versão anterior
+ * do app tem uma foto de cada lado em foto_antes e foto_depois: as fotos passam para as listas, sem
+ * perder nenhuma. A fila (fila.js) entrega todo item assim.
+ */
+export function fotosEmListas(item) {
+  if (!item) return item;
+  const novo = Object.assign({}, item);
+  LADOS.forEach((lado) => {
+    novo[`fotos_${lado}`] = listaDeFotos(Array.isArray(item[`fotos_${lado}`]) ? item[`fotos_${lado}`] : item[`foto_${lado}`]);
+    delete novo[`foto_${lado}`];
+  });
+  return novo;
 }
 
 /** O que dá para digitar num campo de número: só algarismos e, com decimais, uma vírgula ou ponto. */
@@ -54,11 +85,14 @@ export function somenteNumeros(texto, decimais) {
 }
 
 function erroDoCampo(campo, texto, hoje) {
+  // Quantidade de um material escolhido (o "Não usou" já saiu em semMaterial): obrigatória e maior que zero.
+  const obrigatorio = campo.obrigatorio || Boolean(campo.material);
   if (!texto && campo.seVazio) return ""; // vazio vira o valor padrão (Nº vazio = "s/n")
-  if (!texto) return campo.obrigatorio ? `${campo.opcoes ? "Escolha" : "Preencha"} ${campo.nome}.` : "";
+  if (!texto) return obrigatorio ? `${campo.opcoes ? "Escolha" : "Preencha"} ${campo.nome}.` : "";
   if (texto.length > TAMANHO_MAXIMO_TEXTO) return `Use no máximo ${TAMANHO_MAXIMO_TEXTO} letras.`;
   if (campo.tipo === "numero" && campo.decimais && !RE_NUMERO.test(texto)) return "Use só números, por exemplo 6 ou 1,5.";
   if (campo.tipo === "numero" && !campo.decimais && !RE_INTEIRO.test(texto)) return "Use só números inteiros, por exemplo 6.";
+  if (campo.material && Number(texto.replace(",", ".")) === 0) return "Use um número maior que zero.";
   if (campo.tipo === "data") {
     if (!dataValida(texto)) return "Data inválida.";
     if (texto > hoje) return "A data não pode ser depois de hoje.";
@@ -80,7 +114,7 @@ export function dataDeHoje(agora = new Date()) {
 
 /** Sem fotos e sem nada digitado. A data não conta: ela já vem preenchida com hoje. */
 export function formularioVazio(valores, fotos, campos = CAMPOS) {
-  if (fotos.antes || fotos.depois) return false;
+  if (fotos.antes.length > 0 || fotos.depois.length > 0) return false;
   return campos.every((campo) => campo.tipo === "data" || !limparTexto(valores[campo.chave]));
 }
 
@@ -98,14 +132,18 @@ export function limparCampos(valores, campos = CAMPOS) {
   return limpos;
 }
 
-/** Corpo do POST para o Apps Script (contrato na especificação). `aparelho`: o código deste celular. */
-export function montarEnvio(item, base64Antes, base64Depois, aparelho, campos = CAMPOS) {
+/**
+ * Corpo do POST para o Apps Script (contrato na especificação). `aparelho`: o código deste celular.
+ * `antes` e `depois`: o base64 de cada foto do lado, na ordem em que foram tiradas (a 1ª é a principal).
+ */
+export function montarEnvio(item, antes, depois, aparelho, campos = CAMPOS) {
   const corpo = { versao: VERSAO_CONTRATO, aparelho: aparelho, id: item.id, registrado_em: item.registrado_em };
   campos.forEach((campo) => {
     corpo[campo.chave] = item.campos[campo.chave] || "";
   });
-  corpo.foto_antes = { tipo: "image/jpeg", base64: base64Antes };
-  corpo.foto_depois = { tipo: "image/jpeg", base64: base64Depois };
+  const jpeg = (base64) => ({ tipo: "image/jpeg", base64: base64 });
+  corpo.fotos_antes = antes.map(jpeg);
+  corpo.fotos_depois = depois.map(jpeg);
   return corpo;
 }
 
@@ -171,8 +209,8 @@ export function aplicarResultado(item, resultado, agoraMs) {
       situacao: SITUACAO.ENVIADO,
       enviado_ms: agoraMs,
       linha: resultado.linha,
-      foto_antes: null,
-      foto_depois: null,
+      fotos_antes: [],
+      fotos_depois: [],
       tentativas: tentativas,
       ultimo_erro: null,
     };

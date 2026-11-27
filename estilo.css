@@ -73,7 +73,8 @@ p {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
   color: inherit;
 }
@@ -279,7 +280,7 @@ select {
   margin-bottom: var(--e5);
 }
 
-/* ---------- Fotos: os dois quadros lado a lado, como no relatório ---------- */
+/* ---------- Fotos: antes e depois lado a lado, como no relatório; até 3 de cada lado ---------- */
 
 .fotos {
   margin: 0 0 var(--e5);
@@ -288,12 +289,81 @@ select {
   min-width: 0;
 }
 
+.fotos > .explicacao {
+  margin-bottom: var(--e3);
+}
+
 .fotos-grade {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--e3);
+  align-items: start;
 }
 
+/* As fotos já tiradas, na ordem: a 1ª (a principal) na largura toda; as outras, na metade. */
+.miniaturas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--e2);
+  margin: 0 0 var(--e2);
+  padding: 0;
+  list-style: none;
+}
+
+.miniatura {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: var(--raio);
+  border: 2px solid var(--azul-900);
+  background: var(--superficie);
+}
+
+.miniatura:first-child {
+  grid-column: 1 / -1;
+  border-radius: var(--raio-grande);
+}
+
+/* O × no canto da miniatura: desenho de 28 px, alvo de toque de 48 px. */
+.foto-remover {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+/* A miniatura corta o que passa da borda: o anel de foco fica por dentro do alvo de toque. */
+.foto-remover:focus-visible {
+  box-shadow:
+    inset 0 0 0 2px var(--azul-900),
+    inset 0 0 0 5px var(--amarelo-500);
+}
+
+.foto-remover svg {
+  width: 28px;
+  height: 28px;
+}
+
+.foto-remover circle {
+  fill: var(--azul-900);
+  stroke: var(--branco);
+}
+
+.foto-remover path {
+  stroke: var(--branco);
+}
+
+/* O quadro de tirar foto: grande enquanto o lado não tem foto; depois, um botão baixo embaixo das fotos. */
 .foto {
   position: relative;
   display: flex;
@@ -309,13 +379,35 @@ select {
   box-shadow: var(--foco);
 }
 
-.foto--com-imagem {
-  border-style: solid;
-  border-color: var(--azul-900);
+.foto[aria-busy="true"] {
+  cursor: progress;
 }
 
 .foto--erro {
   border-color: var(--vermelho-700);
+}
+
+.foto-bloco--com-fotos .foto {
+  aspect-ratio: auto;
+  min-height: var(--altura-campo);
+  border-radius: var(--raio);
+}
+
+.foto-bloco--com-fotos .foto-vazia {
+  flex-direction: row;
+  gap: var(--e2);
+  padding: var(--e2) var(--e3);
+}
+
+.foto-bloco--com-fotos .foto-icone {
+  flex: none;
+  width: 28px;
+  height: 28px;
+}
+
+.foto-bloco--com-fotos .foto-ajuda {
+  color: var(--azul-900);
+  font-weight: 600;
 }
 
 .foto-vazia {
@@ -384,6 +476,23 @@ select {
   box-shadow: var(--foco);
 }
 
+/* Enquanto a foto anterior é preparada, não dá para escolher outra do mesmo lado. */
+.galeria:has(input:disabled) {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* Com 3 fotos no lado, no lugar de tirar foto e da galeria. */
+.foto-maximo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  font-size: var(--texto-pequeno);
+  color: var(--texto-suave);
+  text-align: center;
+}
+
 /* ---------- Campos ---------- */
 
 .campo + .campo {
@@ -411,7 +520,8 @@ select {
 }
 
 .campo input,
-.campo select {
+.campo select,
+.campo textarea {
   display: block;
   width: 100%;
   height: var(--altura-campo);
@@ -420,6 +530,13 @@ select {
   border-radius: var(--raio);
   background-color: var(--branco);
   font-size: var(--texto-base);
+}
+
+.campo textarea {
+  height: auto;
+  min-height: 7rem;
+  padding: var(--e3) var(--e4);
+  resize: vertical;
 }
 
 .campo select {
@@ -436,14 +553,16 @@ select {
 }
 
 .campo input:focus,
-.campo select:focus {
+.campo select:focus,
+.campo textarea:focus {
   outline: none;
   border-color: var(--azul-900);
   box-shadow: 0 0 0 3px var(--amarelo-500);
 }
 
 .campo input[aria-invalid="true"],
-.campo select[aria-invalid="true"] {
+.campo select[aria-invalid="true"],
+.campo textarea[aria-invalid="true"] {
   border-color: var(--vermelho-700);
 }
 
@@ -487,6 +606,7 @@ select {
 }
 
 .campo input:disabled,
+.campo textarea:disabled,
 .opcao:disabled {
   border-color: var(--borda);
   background: var(--superficie);
